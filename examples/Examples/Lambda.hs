@@ -102,23 +102,23 @@ $(derive [liftSum] [''Eval])
 eval :: (Difunctor f, Eval f m) => Term f -> m (Sem m)
 eval = cata evalAlg
 
-instance Monad m => Eval Lam m where
+instance MonadFail m => Eval Lam m where
   evalAlg (Lam f) = return (Fun (f . return))
 
-instance Monad m => Eval App m where
+instance MonadFail m => Eval App m where
   evalAlg (App mx my) = do x <- mx
                            case x of Fun f -> f =<< my; _ -> fail "stuck"
 
 instance Monad m => Eval Const m where
   evalAlg (Const n) = return (Int n)
 
-instance Monad m => Eval Plus m where
+instance MonadFail m => Eval Plus m where
   evalAlg (Plus mx my) = do x <- mx
                             y <- my
                             case (x,y) of (Int n,Int m) -> return (Int (n + m))
                                           _             -> fail "stuck"
 
-instance Monad m => Eval Err m where
+instance MonadFail m => Eval Err m where
   evalAlg Err = fail "error"
 
 e :: Term Sig

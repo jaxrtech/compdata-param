@@ -71,7 +71,7 @@ whnf' =  liftM (either Var inject) . whnf
 -- 'whnf' and then projects the top-level signature to the desired
 -- subsignature. Failure to do the projection is signalled as a
 -- failure in the monad.
-whnfPr :: (Monad m, g :<: f) => TrmT m f a -> m (g a (TrmT m f a))
+whnfPr :: (MonadFail m, g :<: f) => TrmT m f a -> m (g a (TrmT m f a))
 whnfPr t = do res <- whnf t
               case res of
                 Left _  -> fail "cannot project variable"
@@ -92,13 +92,13 @@ nf = either (return . Var) (liftM In . dimapM nf) <=< whnf
 -- | This function evaluates all thunks while simultaneously
 -- projecting the term to a smaller signature. Failure to do the
 -- projection is signalled as a failure in the monad as in 'whnfPr'.
-nfTPr :: (ParamFunctor m, Monad m, Ditraversable g, g :<: f) => TermT m f -> m (Term g)
+nfTPr :: (ParamFunctor m, MonadFail m, Ditraversable g, g :<: f) => TermT m f -> m (Term g)
 nfTPr t = termM $ nfPr $ unTerm t
 
 -- | This function evaluates all thunks while simultaneously
 -- projecting the term to a smaller signature. Failure to do the
 -- projection is signalled as a failure in the monad as in 'whnfPr'.
-nfPr :: (Monad m, Ditraversable g, g :<: f) => TrmT m f a -> m (Trm g a)
+nfPr :: (MonadFail m, Ditraversable g, g :<: f) => TrmT m f a -> m (Trm g a)
 nfPr = liftM In . dimapM nfPr <=< whnfPr
 
 
